@@ -1,3 +1,5 @@
+![AI Security for the Everyday Dev — Anna's Dog Grooming Workshop](docs/screenshots/header-banner.png)
+
 # Anna's Dog Grooming — Phase 3
 
 **Secure MCP server for AI agents** · built on Phase 1 + Phase 2.
