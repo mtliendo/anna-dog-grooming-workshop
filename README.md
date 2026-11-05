@@ -1,3 +1,5 @@
+![AI Security for the Everyday Dev — Anna's Dog Grooming Workshop](docs/screenshots/header-banner.png)
+
 # Anna's Dog Grooming — Phase 1
 
 **AI Security for the everyday dev** · a 1-hour hands-on workshop by [Michael Liendo](https://focusotter.com) ([@focusotter](https://x.com/focusotter)), Staff Developer Advocate at Auth0.
