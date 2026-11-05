@@ -31,6 +31,8 @@ export type Appointment = {
   time: string;
   notes: string | null;
   created_at: string;
+  calendar_event_id?: string | null;
+  calendar_event_link?: string | null;
   dog_name?: string;
   dog_breed?: string;
 };
@@ -73,8 +75,28 @@ export async function initDb(): Promise<Client> {
     CREATE INDEX IF NOT EXISTS idx_appointments_user ON appointments(user_sub);
   `);
 
+  // Phase 1 databases carry over — add Token Vault columns only if missing.
+  await ensureColumn(db, "appointments", "calendar_event_id", "TEXT");
+  await ensureColumn(db, "appointments", "calendar_event_link", "TEXT");
+
   initialized = true;
   return db;
+}
+
+async function ensureColumn(
+  db: Client,
+  table: string,
+  column: string,
+  type: string,
+) {
+  try {
+    await db.execute(`ALTER TABLE ${table} ADD COLUMN ${column} ${type}`);
+  } catch (error) {
+    const message = error instanceof Error ? error.message : String(error);
+    if (!/duplicate column/i.test(message)) {
+      throw error;
+    }
+  }
 }
 
 export async function listDogs(userSub: string): Promise<Dog[]> {
@@ -177,6 +199,20 @@ export async function cancelAppointment(
   await db.execute({
     sql: "DELETE FROM appointments WHERE user_sub = ? AND id = ?",
     args: [userSub, appointmentId],
+  });
+}
+
+export async function saveCalendarEvent(
+  userSub: string,
+  appointmentId: number,
+  event: { id: string; htmlLink: string },
+): Promise<void> {
+  const db = await initDb();
+  await db.execute({
+    sql: `UPDATE appointments
+          SET calendar_event_id = ?, calendar_event_link = ?
+          WHERE user_sub = ? AND id = ?`,
+    args: [event.id, event.htmlLink, userSub, appointmentId],
   });
 }
 

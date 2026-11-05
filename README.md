@@ -1,25 +1,30 @@
-# Anna's Dog Grooming — Phase 1
+# Anna's Dog Grooming — Phase 2
 
-**AI Security for the everyday dev** · a 1-hour hands-on workshop by [Michael Liendo](https://focusotter.com) ([@focusotter](https://x.com/focusotter)), Staff Developer Advocate at Auth0.
+**Token Vault + Google Calendar reminders** · built on Phase 1.
 
-You're hired! Anna just opened a boutique grooming salon and needs software before the first doodle walks in. In this phase you will:
-
-1. Sign customers in with **Auth0** (email + password *or* the default Google social connection).
-2. Let each customer register their dogs and book a grooming appointment.
-3. Store everything in a **local SQLite file** — scoped to `session.user.sub` so one customer never sees another customer's roster.
-
-No extra databases. No Auth0 CLI. No native C++ addons. Attendees only need **Node.js 20+** and **Git**.
+Anna wants every grooming appointment to land on the customer's own Google Calendar. The tempting shortcut is a `google_refresh_token` column in SQLite. **Don't.** Auth0 **Token Vault** holds the Google tokens; this app only ever sees a short-lived access token from `auth0.getAccessTokenForConnection({ connection: "google-oauth2" })`.
 
 ```bash
-git clone https://github.com/mtliendo/anna-dog-grooming-workshop.git
-cd anna-dog-grooming-workshop
+git checkout phase-2-calendar
 npm install
-cp .env.example .env.local
-# fill in the Auth0 values (see below), then:
 npm run dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000). Until `.env.local` is real, the app renders a **Workshop Setup Needed** card instead of crashing.
+Your Phase 1 SQLite file carries over. `lib/db.ts` runs an idempotent `ALTER TABLE ... ADD COLUMN` for `calendar_event_id` and `calendar_event_link` if they are missing.
+
+---
+
+## Why Phase 1's Google login is not enough
+
+The default Google social connection on a new Auth0 tenant uses **Auth0's shared developer keys**. Those keys are perfect for "can I click Sign in with Google?" in Phase 1.
+
+They do **not**:
+
+- Issue Google **refresh tokens**
+- Allow **Token Vault / Connected Accounts**
+- Let this app call `GET/POST https://www.googleapis.com/calendar/v3/...`
+
+Phase 2 swaps in **your own Google Cloud OAuth Client ID + Secret**, then turns on Token Vault so `/auth/connect` can store Google tokens in Auth0 — never in `data/anna-grooming.db`.
 
 ---
 
@@ -27,133 +32,156 @@ Open [http://localhost:3000](http://localhost:3000). Until `.env.local` is real,
 
 ```mermaid
 flowchart LR
-  Browser["Customer browser"] -->|"/auth/login"| Auth0["Auth0 Universal Login"]
-  Auth0 -->|"/auth/callback"| Next["Next.js App Router"]
-  Next -->|"session.user.sub"| SQLite["libsql SQLite\nfile:./data/anna-grooming.db"]
-  Next -->|"dogs + appointments"| Browser
+  UI["Connect Google Calendar"] -->|"/auth/connect?connection=google-oauth2"| SDK["nextjs-auth0 v4\nenableConnectAccountEndpoint"]
+  SDK --> MyAccount["Auth0 My Account API\n/me/v1/connected-accounts"]
+  MyAccount --> Google["Google OAuth consent"]
+  Google --> Vault["Auth0 Token Vault"]
+  Book["Book / Add Reminder"] -->|"getAccessTokenForConnection"| Vault
+  Book -->|"POST /calendar/v3/calendars/primary/events"| Cal["Google Calendar"]
+  Cal -->|"htmlLink"| SQLite["appointments.calendar_event_link"]
 ```
-
-| Piece | Why it's here |
-| --- | --- |
-| `@auth0/nextjs-auth0` v4 | Cookie session, `/auth/login`, `/auth/logout`, `/auth/callback` |
-| `@libsql/client` | Pure JS/WASM SQLite — **not** `better-sqlite3`, so macOS/Windows/Linux work without Xcode CLT or Python |
-| `user_sub` on every row | The isolation story: identity from Auth0 is the row key |
 
 ---
 
-## Prerequisites
+## Google Cloud Console walkthrough
 
-- **Node.js 20+** and **npm** (this repo ships `package-lock.json` — please don't switch to pnpm/yarn mid-workshop)
-- **Git**
-- A free [Auth0](https://auth0.com/signup) account
+1. Open [Google Cloud Console](https://console.cloud.google.com/) and create (or pick) a project.
+2. **APIs & Services → Library** → enable **Google Calendar API**.
+3. **APIs & Services → OAuth consent screen**
+   - User type: **External** is fine for a workshop.
+   - App name: `Anna's Dog Grooming`.
+   - Add your email as a test user.
+   - Scopes: `openid`, `email`, `profile`, and `https://www.googleapis.com/auth/calendar.events` (or the broader `https://www.googleapis.com/auth/calendar`).
+4. **APIs & Services → Credentials → Create credentials → OAuth client ID**
+   - Application type: **Web application**.
+   - Authorized redirect URI — this is Auth0's callback, **not** localhost:
 
-That's it. No Postgres, no Redis, no Auth0 CLI, no Google Cloud project yet.
+     ```
+     https://YOUR-TENANT.us.auth0.com/login/callback
+     ```
 
----
-
-## Auth0 Dashboard setup
-
-All tenant work happens in the dashboard. Do **not** run the Auth0 CLI or call the Management API.
-
-### 1. Create a Regular Web Application
-
-1. Open [Auth0 Dashboard](https://manage.auth0.com/) → **Applications → Applications → Create Application**.
-2. Name it `Anna's Dog Grooming`.
-3. Choose **Regular Web Applications** (not SPA, not Native). Next.js keeps a client secret on the server.
-4. Create.
-
-### 2. Point it at localhost
-
-On the **Settings** tab, paste:
-
-| Setting | Value |
-| --- | --- |
-| Allowed Callback URLs | `http://localhost:3000/auth/callback` |
-| Allowed Logout URLs | `http://localhost:3000` |
-| Allowed Web Origins | `http://localhost:3000` |
-
-Scroll to the bottom and **Save Changes**.
-
-### 3. Fill in `.env.local`
-
-```bash
-cp .env.example .env.local
-```
-
-```
-AUTH0_SECRET=          # openssl rand -hex 32
-APP_BASE_URL=http://localhost:3000
-AUTH0_DOMAIN=          # e.g. dev-abc123.us.auth0.com  (no https://)
-AUTH0_CLIENT_ID=       # from the application Settings tab
-AUTH0_CLIENT_SECRET=   # from the same tab
-```
-
-`AUTH0_DOMAIN` is the hostname only. `APP_BASE_URL` is how the SDK builds `/auth/callback`.
-
-Restart `npm run dev` after saving.
-
-### 4. Try both login methods
-
-Auth0 tenants ship with **Username-Password-Authentication** and a **Google** social connection already on.
-
-- **Email + password** — click **Sign up**, create a customer.  
-  **Pro tip:** new Auth0 tenants require a **15+ character** password by default. `AnnaLovesDoodles!` works.
-- **Google** — the default Google connection uses Auth0's built-in *developer* keys. That's perfect for "can I sign in?" in Phase 1.
-
-> **Why we'll bring our own Google OAuth keys in Phase 2:** Auth0's shared Google dev keys are fine for login. They do **not** issue refresh tokens, and they cannot be used with **Token Vault / Connected Accounts**. Phase 2 swaps in a Google Cloud OAuth client so Anna can drop a reminder on the customer's real calendar *without this app ever storing a Google refresh token*.
+5. Copy the **Client ID** and **Client Secret**.
 
 ---
 
-## Code tour
+## Auth0 Dashboard walkthrough
+
+Do this by hand in the dashboard. No CLI, no Management API.
+
+### 1. Put your Google keys on the connection
+
+1. **Authentication → Social → Google**.
+2. Replace Auth0's developer keys with the Google Cloud Client ID + Secret.
+3. Open **Permissions** and enable **Offline Access**. Token Vault cannot refresh without it.
+4. Under **Purpose**, enable **Connected Accounts for Token Vault** (keep **Authentication** on so Phase 1 Google login still works).
+5. **Save**.
+
+### 2. Enable the Token Vault grant on the app
+
+1. **Applications → Anna's Dog Grooming → Settings → Advanced Settings → Grant Types**.
+2. Check **Token Vault** (and keep **Authorization Code** + **Refresh Token**).
+3. **Save Changes**.
+
+### 3. Activate the My Account API *(required by v4 Connected Accounts)*
+
+`/auth/connect` talks to `https://<AUTH0_DOMAIN>/me/v1/connected-accounts`. That is the **My Account API**.
+
+1. **Applications → APIs** → activate **Auth0 My Account API**.
+2. Open it → **Application Access** → find *Anna's Dog Grooming* → **Edit**.
+3. **User Access** → **Authorized**.
+4. Permissions: select **all Connected Accounts scopes**
+   (`create:me:connected_accounts`, `read:me:connected_accounts`, `delete:me:connected_accounts`).
+5. **Save**.
+6. On the API **Settings** tab, under Access Settings, allow skipping user consent if you are using Multi-Resource Refresh Tokens.
+
+### 4. Multi-Resource Refresh Token (MRRT)
+
+1. **Applications → Anna's Dog Grooming → Multi-Resource Refresh Token → Edit Configuration**.
+2. Toggle on **My Account API**.
+3. Save.
+
+### Pro tips
+
+- **Free plan** includes up to **2 Token Vault connections**. Google counts as one. Don't enable every social provider "just in case."
+- Request `offline_access` **and** `https://www.googleapis.com/auth/calendar.events` (or `calendar`). The Connect button in this app already sends those as `scopes` query params.
+- If Connect fails with a consent or refresh-token error, you are almost always still on Auth0's Google developer keys.
+- MFA set to **Always** blocks Token Vault exchanges. Use **Never** for the workshop, or customize MFA with an Action.
+
+---
+
+## Try it
+
+1. Sign in at [http://localhost:3000](http://localhost:3000).
+2. Click **Connect Google Calendar** — you should hit Google's consent screen, then land back on `/`.
+3. Book a visit (or click **Add Reminder to Calendar** on an existing Phase 1 appointment).
+4. The appointment card grows a **View in Google Calendar ↗** badge from the event's `htmlLink`.
+
+If Google isn't connected yet, booking still succeeds. The reminder button explains what the tenant still needs.
+
+---
+
+## Code tour — the Phase 1 diff
 
 ### `lib/auth0.ts`
 
-v4's `Auth0Client` reads `AUTH0_DOMAIN`, `AUTH0_CLIENT_ID`, `AUTH0_CLIENT_SECRET`, `AUTH0_SECRET`, and `APP_BASE_URL`. We construct it **lazily** so a missing `.env.local` never throws during `next build` or first paint.
-
-### `proxy.ts` (Next.js 16; this used to be `middleware.ts`)
-
 ```ts
-export async function proxy(request: NextRequest) {
-  if (!isAuth0Configured()) return NextResponse.next();
-  return getAuth0().middleware(request);
-}
+export const auth0 = new Auth0Client({
+  enableConnectAccountEndpoint: true, // mounts /auth/connect
+  authorizationParameters: {
+    scope: "openid profile email offline_access",
+  },
+});
 ```
 
-That one call mounts:
+The Connect button hits:
 
-- `/auth/login`
-- `/auth/logout`
-- `/auth/callback`
-- `/auth/profile`
+```
+/auth/connect?connection=google-oauth2&returnTo=/&scopes=openid&scopes=profile&scopes=email&scopes=offline_access&scopes=https://www.googleapis.com/auth/calendar.events
+```
 
-There is no `/api/auth/*` prefix in v4.
+### `lib/google-calendar.ts`
+
+```ts
+const { token } = await auth0.getAccessTokenForConnection({
+  connection: "google-oauth2",
+});
+
+await fetch("https://www.googleapis.com/calendar/v3/calendars/primary/events", {
+  method: "POST",
+  headers: { Authorization: `Bearer ${token}` },
+  body: JSON.stringify({ summary, start, end }),
+});
+```
+
+The Google refresh token never touches this process. SQLite only stores `calendar_event_id` / `calendar_event_link`.
 
 ### `lib/db.ts`
 
-`@libsql/client` opens `file:./data/anna-grooming.db` and creates `./data/` plus the `dogs` / `appointments` tables on first use. Every query includes `WHERE user_sub = ?`. The sample dog button inserts **Barnaby · Golden Doodle** so the projector demo is one click.
+Idempotent migration so a Phase 1 database keeps working:
 
-The service catalog (`Bath & Brush`, `Full Groom`, `Puppy Intro Trim`, `Nail & Paw Spa`) is seeded in `lib/services.ts` — not in SQLite — so attendees can change prices without a migration.
+```ts
+await ensureColumn(db, "appointments", "calendar_event_id", "TEXT");
+await ensureColumn(db, "appointments", "calendar_event_link", "TEXT");
+```
 
 ---
 
 ## After the workshop / keep building
 
-Phase 1 is the salon: identity + your own data. Next, Anna wants appointment reminders on Google Calendar — without a `google_refresh_token` column in SQLite.
+Phase 2 put reminders on a human's calendar. Phase 3 lets an **AI agent** book as that same customer — OAuth 2.1 + DCR, never a shared API key.
 
 ```bash
-git checkout phase-2-calendar
-npm install   # only if lockfile changed
+git checkout phase-3-mcp
+npm install
 npm run dev
 ```
-
-Phase 2 adds Auth0 **Token Vault** / **Connected Accounts**. Phase 3 (`git checkout phase-3-mcp`) turns the same SQLite book into a **secure MCP server** so Grok, Cursor, or Claude can book as the signed-in customer.
 
 ---
 
 ## Scripts
 
 ```bash
-npm run dev     # http://localhost:3000
-npm run build   # production build — must pass without .env.local
-npm run lint    # eslint
+npm run dev
+npm run build
+npm run lint
 ```

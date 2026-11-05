@@ -1,10 +1,12 @@
 import { AppointmentPanel } from "@/components/appointment-panel";
+import { CalendarCard } from "@/components/calendar-card";
 import { DogPanel } from "@/components/dog-panel";
 import { SetupChecklist } from "@/components/setup-checklist";
 import { WelcomeHero } from "@/components/welcome-hero";
 import { getSessionSafe } from "@/lib/auth0";
 import { getEnvChecklist, isAuth0Configured } from "@/lib/config";
 import { listAppointments, listDogs } from "@/lib/db";
+import { isGoogleCalendarConnected } from "@/lib/google-calendar";
 
 export const dynamic = "force-dynamic";
 
@@ -18,9 +20,10 @@ export default async function HomePage() {
     return <WelcomeHero />;
   }
 
-  const [dogs, appointments] = await Promise.all([
+  const [dogs, appointments, calendarConnected] = await Promise.all([
     listDogs(session.user.sub),
     listAppointments(session.user.sub),
+    isGoogleCalendarConnected(),
   ]);
 
   return (
@@ -37,6 +40,10 @@ export default async function HomePage() {
           isolation story for this hour.
         </p>
       </section>
+      <CalendarCard
+        connected={calendarConnected}
+        email={session.user.email}
+      />
       <div className="grid-2">
         <DogPanel dogs={dogs} />
         <AppointmentPanel dogs={dogs} appointments={appointments} />

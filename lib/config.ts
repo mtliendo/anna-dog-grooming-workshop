@@ -2,10 +2,29 @@ export const APP_BASE_URL =
   process.env.APP_BASE_URL?.trim() || "http://localhost:3000";
 
 export const WORKSHOP_PHASE = {
-  number: 1,
-  slug: "authentication",
-  label: "Phase 1 · Authentication",
+  number: 2,
+  slug: "token-vault",
+  label: "Phase 2 · Token Vault",
 } as const;
+
+export const GOOGLE_CONNECTION = "google-oauth2";
+export const GOOGLE_CALENDAR_SCOPES = [
+  "openid",
+  "profile",
+  "email",
+  "offline_access",
+  "https://www.googleapis.com/auth/calendar.events",
+] as const;
+
+export function getGoogleConnectUrl(returnTo = "/"): string {
+  const params = new URLSearchParams();
+  params.set("connection", GOOGLE_CONNECTION);
+  params.set("returnTo", returnTo);
+  for (const scope of GOOGLE_CALENDAR_SCOPES) {
+    params.append("scopes", scope);
+  }
+  return `/auth/connect?${params.toString()}`;
+}
 
 const PLACEHOLDERS: Record<string, string[]> = {
   AUTH0_SECRET: ["replace-with-openssl-rand-hex-32", "change-me"],

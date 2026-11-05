@@ -24,8 +24,10 @@ export function getAuth0(): Auth0Client {
       clientSecret: process.env.AUTH0_CLIENT_SECRET,
       secret: process.env.AUTH0_SECRET,
       appBaseUrl: process.env.APP_BASE_URL,
+      // Mounts /auth/connect for the Connected Accounts (Token Vault) flow.
+      enableConnectAccountEndpoint: true,
       authorizationParameters: {
-        scope: "openid profile email",
+        scope: "openid profile email offline_access",
       },
     });
   }

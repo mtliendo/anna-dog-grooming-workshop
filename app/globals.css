@@ -270,6 +270,16 @@ img {
   padding: 22px;
 }
 
+.card-sage {
+  border-color: #cfe3d6;
+  background: color-mix(in srgb, var(--sage-soft) 55%, var(--paper-card));
+}
+
+.card-amber {
+  border-color: #efd2bb;
+  background: color-mix(in srgb, var(--terracotta-soft) 40%, var(--paper-card));
+}
+
 .card-title {
   font-family: var(--font-display), "Fraunces", serif;
   font-size: 1.35rem;

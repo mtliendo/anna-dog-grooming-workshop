@@ -1,4 +1,8 @@
-import { bookAppointmentAction, cancelAppointmentAction } from "@/app/actions";
+import {
+  addCalendarReminderAction,
+  bookAppointmentAction,
+  cancelAppointmentAction,
+} from "@/app/actions";
 import type { Appointment, Dog } from "@/lib/db";
 import {
   GROOMING_SERVICES,
@@ -113,6 +117,27 @@ export function AppointmentPanel({
                 {appointment.notes ? (
                   <p className="faint">{appointment.notes}</p>
                 ) : null}
+                {appointment.calendar_event_link ? (
+                  <a
+                    className="badge badge-sage"
+                    href={appointment.calendar_event_link}
+                    target="_blank"
+                    rel="noreferrer"
+                  >
+                    View in Google Calendar ↗
+                  </a>
+                ) : (
+                  <form action={addCalendarReminderAction}>
+                    <input
+                      type="hidden"
+                      name="appointmentId"
+                      value={appointment.id}
+                    />
+                    <button className="btn btn-ghost btn-small" type="submit">
+                      Add Reminder to Calendar
+                    </button>
+                  </form>
+                )}
               </article>
             );
           })

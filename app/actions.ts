@@ -8,7 +8,15 @@ import {
   bookAppointment,
   cancelAppointment,
   deleteDog,
+  getAppointment,
+  saveCalendarEvent,
 } from "@/lib/db";
+import {
+  CalendarNotConnectedError,
+  createAppointmentReminder,
+  explainCalendarError,
+  getGoogleAccessToken,
+} from "@/lib/google-calendar";
 
 async function requireSub() {
   const session = await getSessionSafe();
@@ -61,7 +69,29 @@ export async function bookAppointmentAction(formData: FormData) {
     throw new Error("Pick a dog, a service, a date, and a time slot.");
   }
 
-  await bookAppointment(sub, { dogId, serviceId, date, time, notes });
+  const appointment = await bookAppointment(sub, {
+    dogId,
+    serviceId,
+    date,
+    time,
+    notes,
+  });
+
+  // Best-effort: if Token Vault already has a Google token, drop the reminder
+  // on the calendar. Booking still succeeds if Calendar isn't connected yet.
+  try {
+    const token = await getGoogleAccessToken();
+    const hydrated = await getAppointment(sub, appointment.id);
+    if (hydrated) {
+      const event = await createAppointmentReminder(token, hydrated);
+      await saveCalendarEvent(sub, appointment.id, event);
+    }
+  } catch (error) {
+    if (!(error instanceof CalendarNotConnectedError)) {
+      console.warn("Calendar reminder skipped:", explainCalendarError(error));
+    }
+  }
+
   revalidatePath("/");
 }
 
@@ -72,5 +102,28 @@ export async function cancelAppointmentAction(formData: FormData) {
     throw new Error("Missing appointment id.");
   }
   await cancelAppointment(sub, appointmentId);
+  revalidatePath("/");
+}
+
+export async function addCalendarReminderAction(formData: FormData) {
+  const sub = await requireSub();
+  const appointmentId = Number(formData.get("appointmentId"));
+  if (!appointmentId) {
+    throw new Error("Missing appointment id.");
+  }
+
+  const appointment = await getAppointment(sub, appointmentId);
+  if (!appointment) {
+    throw new Error("That appointment is not on your book.");
+  }
+
+  try {
+    const token = await getGoogleAccessToken();
+    const event = await createAppointmentReminder(token, appointment);
+    await saveCalendarEvent(sub, appointmentId, event);
+  } catch (error) {
+    throw new Error(explainCalendarError(error));
+  }
+
   revalidatePath("/");
 }
