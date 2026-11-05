@@ -18,6 +18,18 @@ If the in-app **Workshop Setup Needed** card is still up, paste callback / logou
 
 ---
 
+## What you're building
+
+Before Token Vault is linked, the salon shows a **Connect Google Calendar** card and an **Add Reminder to Calendar** action on each visit:
+
+![Phase 2 — Google Calendar not connected](docs/screenshots/app-03-phase2-calendar-unconnected.png)
+
+After the customer connects, Auth0 Token Vault holds the Google tokens. Appointments grow a **View in Google Calendar** badge from `calendar_event_link` — still no refresh token in SQLite:
+
+![Phase 2 — Token Vault connected with calendar reminder badges](docs/screenshots/app-04-phase2-calendar-connected.png)
+
+---
+
 ## Why Phase 1's Google login is not enough
 
 The default Google social connection on a new Auth0 tenant uses **Auth0's shared developer keys**. Those keys are perfect for "can I click Sign in with Google?" in Phase 1.
