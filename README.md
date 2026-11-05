@@ -1,3 +1,5 @@
+![AI Security for the Everyday Dev — Anna's Dog Grooming Workshop](docs/screenshots/header-banner.png)
+
 # Anna's Dog Grooming — Phase 2
 
 **Token Vault + Google Calendar reminders** · built on Phase 1.
