@@ -19,7 +19,19 @@ cp .env.example .env.local
 npm run dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000). Until `.env.local` is real, the app renders a **Workshop Setup Needed** card instead of crashing.
+Open [http://localhost:3000](http://localhost:3000). Until `.env.local` is real, the app renders a **Workshop Setup Needed** card instead of crashing:
+
+![Workshop Setup Needed card before .env.local is filled in](docs/screenshots/app-00-setup-needed.png)
+
+---
+
+## What you're building
+
+The logged-out boutique landing — Sign in / Sign up and today's grooming menu — and the signed-in customer book for Maya Lin (`maya@example.com`), with Barnaby the Goldendoodle, Mochi the French Bulldog, and two upcoming visits.
+
+![Logged-out landing with Sign in / Sign up](docs/screenshots/app-01-landing-logged-out.png)
+
+![Signed-in Phase 1 dashboard — dogs, appointments, and booking form](docs/screenshots/app-02-phase1-dashboard.png)
 
 ---
 
