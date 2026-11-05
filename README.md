@@ -12,6 +12,10 @@ npm run dev
 
 Your Phase 1 SQLite file carries over. `lib/db.ts` runs an idempotent `ALTER TABLE ... ADD COLUMN` for `calendar_event_id` and `calendar_event_link` if they are missing.
 
+Screenshots below are from a real workshop tenant. In prose we write **`<YOUR_AUTH0_DOMAIN>`** (for example `your-tenant.us.auth0.com`). The images still show the demo tenant we used while recording — your slug will be different.
+
+If the in-app **Workshop Setup Needed** card is still up, paste callback / logout / CORS values on the application's **URLs** tab (not Settings), press **Enter** so each becomes a **DEV** chip, then **Save**.
+
 ---
 
 ## Why Phase 1's Google login is not enough
@@ -23,6 +27,10 @@ They do **not**:
 - Issue Google **refresh tokens**
 - Allow **Token Vault / Connected Accounts**
 - Let this app call `GET/POST https://www.googleapis.com/calendar/v3/...`
+
+That starting point looks like this — Token Vault radios exist, **Offline Access** and **Calendar** are still unchecked, and the yellow development-keys banner is still up:
+
+![google-oauth2 before your own keys — Token Vault radios and Calendar scopes](docs/screenshots/09-google-social-scopes-and-token-vault.png)
 
 Phase 2 swaps in **your own Google Cloud OAuth Client ID + Secret**, then turns on Token Vault so `/auth/connect` can store Google tokens in Auth0 — never in `data/anna-grooming.db`.
 
@@ -43,68 +51,105 @@ flowchart LR
 
 ---
 
-## Google Cloud Console walkthrough
+## Google Cloud Console (self-paced)
 
-1. Open [Google Cloud Console](https://console.cloud.google.com/) and create (or pick) a project.
-2. **APIs & Services → Library** → enable **Google Calendar API**.
-3. **APIs & Services → OAuth consent screen**
-   - User type: **External** is fine for a workshop.
-   - App name: `Anna's Dog Grooming`.
-   - Add your email as a test user.
-   - Scopes: `openid`, `email`, `profile`, and `https://www.googleapis.com/auth/calendar.events` (or the broader `https://www.googleapis.com/auth/calendar`).
-4. **APIs & Services → Credentials → Create credentials → OAuth client ID**
-   - Application type: **Web application**.
-   - Authorized redirect URI — this is Auth0's callback, **not** localhost:
+Do this in [Google Cloud Console](https://console.cloud.google.com/) before touching Auth0 again.
 
-     ```
-     https://YOUR-TENANT.us.auth0.com/login/callback
-     ```
+### 1. Create a project
 
-5. Copy the **Client ID** and **Client Secret**.
+**New Project** — name it something like `Anna Dog Grooming Workshop`, then **Create**.
+
+![Google Cloud — create the workshop project](docs/screenshots/12-gcp-create-project.png)
+
+### 2. Enable the Google Calendar API
+
+**APIs & Services → Library** → search **Google Calendar API** → **Enable**. You should land on a page whose status is **Enabled**.
+
+![Google Calendar API enabled](docs/screenshots/13-gcp-enable-calendar-api.png)
+
+### 3. Branding & Audience (Google Auth Platform)
+
+Open **Google Auth Platform → Branding** and fill in the app name / support email.
+
+Then open **Audience**:
+
+- **User type:** **External**
+- **Publishing status:** **Testing**
+
+> **Important Pro Tip — Test users:** under **Test users** you **must** add an email associated with a **real Google / Gmail or Google Workspace account**. Google rejects `+alias` addresses and non-Google-account emails. If Connect fails with a vague "access denied" after consent, this is usually why.
+
+![Google Auth Platform Audience — External, Testing, Test users](docs/screenshots/14-gcp-oauth-audience-testing.png)
+
+### 4. Create the OAuth client
+
+**Google Auth Platform → Clients → Create Client**
+
+- Application type: **Web application**
+- Name: `Anna's Dog Grooming Auth0` (or similar)
+- **Authorized redirect URI** — this is Auth0's callback, **not** localhost:
+
+  ```
+  https://<YOUR_AUTH0_DOMAIN>/login/callback
+  ```
+
+Copy the **Client ID** and **Client Secret**.
+
+![OAuth web client with Auth0 /login/callback as the redirect URI](docs/screenshots/15-gcp-oauth-client-redirect-uri.png)
 
 ---
 
-## Auth0 Dashboard walkthrough
+## Auth0 Dashboard — 4 checkpoints (November 2026 UI)
 
-Do this by hand in the dashboard. No CLI, no Management API.
+Do this by hand. No CLI, no Management API.
 
-### 1. Put your Google keys on the connection
+### Checkpoint 1 — `Authentication → Social → google-oauth2`
 
-1. **Authentication → Social → Google**.
-2. Replace Auth0's developer keys with the Google Cloud Client ID + Secret.
-3. Open **Permissions** and enable **Offline Access**. Token Vault cannot refresh without it.
-4. Under **Purpose**, enable **Connected Accounts for Token Vault** (keep **Authentication** on so Phase 1 Google login still works).
-5. **Save**.
+1. Paste your Google **Client ID** and **Client Secret**.
+2. Select the **second** radio card: **"Authentication and Connected Accounts for Token Vault"** — so Google still works for Phase 1 sign-in *and* for `/auth/connect`.
+3. If Auth0 prompts **"Offline Access Required"**, click **Enable & Continue**.
+4. Under **Permissions**, verify **Offline Access** is checked.
+5. Scroll to **Calendar**, check **Calendar** and/or **Calendar.Events**.
+6. Click **Save Changes**. The yellow *"This connection is using Auth0 development keys"* banner disappears.
 
-### 2. Enable the Token Vault grant on the app
+![google-oauth2 configured for Authentication and Connected Accounts for Token Vault](docs/screenshots/16-google-social-configured-token-vault.png)
 
-1. **Applications → Anna's Dog Grooming → Settings → Advanced Settings → Grant Types**.
-2. Check **Token Vault** (and keep **Authorization Code** + **Refresh Token**).
-3. **Save Changes**.
+### Checkpoint 2 — Activate the My Account API
 
-### 3. Activate the My Account API *(required by v4 Connected Accounts)*
+`/auth/connect` talks to `https://<YOUR_AUTH0_DOMAIN>/me/v1/connected-accounts`. That is the **My Account API**.
 
-`/auth/connect` talks to `https://<AUTH0_DOMAIN>/me/v1/connected-accounts`. That is the **My Account API**.
+Go to **Applications → APIs** and click **Activate** on the **My Account API** card.
 
-1. **Applications → APIs** → activate **Auth0 My Account API**.
-2. Open it → **Application Access** → find *Anna's Dog Grooming* → **Edit**.
-3. **User Access** → **Authorized**.
-4. Permissions: select **all Connected Accounts scopes**
-   (`create:me:connected_accounts`, `read:me:connected_accounts`, `delete:me:connected_accounts`).
-5. **Save**.
-6. On the API **Settings** tab, under Access Settings, allow skipping user consent if you are using Multi-Resource Refresh Tokens.
+![APIs list — Activate on the My Account API card](docs/screenshots/10-apis-list-initial.png)
 
-### 4. Multi-Resource Refresh Token (MRRT)
+After the green toast, you configure permissions from the *application's* **API Access** tab (Checkpoint 4) — even if the system API row does not immediately appear on this APIs list.
 
-1. **Applications → Anna's Dog Grooming → Multi-Resource Refresh Token → Edit Configuration**.
-2. Toggle on **My Account API**.
-3. Save.
+### Checkpoint 3 — Enable the Token Vault grant type
+
+**Applications → Applications → Anna's Dog Grooming → Settings → Advanced Settings → Grant Types**
+
+Check **Token Vault**, then click **Save Changes**. Keep **Authorization Code** and **Refresh Token** checked.
+
+![Advanced Settings → Grant Types with Token Vault enabled](docs/screenshots/18-app-grant-types-token-vault-enabled.png)
+
+### Checkpoint 4 — Grant My Account API user-delegated scopes
+
+Still on **Anna's Dog Grooming**, click the **API Access** tab.
+
+Find **Auth0 My Account API (SYSTEM)**. Under **User-delegated Access**, grant the three Connected Accounts permissions:
+
+- `create:me:connected_accounts`
+- `read:me:connected_accounts`
+- `delete:me:connected_accounts`
+
+The row should read **3 / 8 permissions granted**.
+
+![API Access — Auth0 My Account API with 3 connected_accounts permissions](docs/screenshots/19-app-my-account-api-access.png)
 
 ### Pro tips
 
 - **Free plan** includes up to **2 Token Vault connections**. Google counts as one. Don't enable every social provider "just in case."
-- Request `offline_access` **and** `https://www.googleapis.com/auth/calendar.events` (or `calendar`). The Connect button in this app already sends those as `scopes` query params.
-- If Connect fails with a consent or refresh-token error, you are almost always still on Auth0's Google developer keys.
+- This app's Connect button already requests `offline_access` and `https://www.googleapis.com/auth/calendar.events`.
+- If Connect fails with a consent or refresh-token error, you are almost always still on Auth0's Google developer keys (Checkpoint 1).
 - MFA set to **Always** blocks Token Vault exchanges. Use **Never** for the workshop, or customize MFA with an Action.
 
 ---
