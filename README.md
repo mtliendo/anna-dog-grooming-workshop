@@ -18,6 +18,18 @@ Screenshots below are from a real workshop tenant. In prose we write **`<YOUR_AU
 
 ---
 
+## What you're building
+
+The signed-in salon with Token Vault connected, plus the **MCP Server Ready** panel — `http://localhost:3000/mcp`, RFC 9728 metadata, `bookings:read` / `bookings:write`, and an 8-second live refresh. Mochi's Puppy Intro Trim below was booked by an AI agent.
+
+![Phase 3 MCP Server Ready panel with dogs and an agent-booked appointment](docs/screenshots/app-05-phase3-mcp-panel.png)
+
+Phase 2 context — the same customer after Google Calendar is linked via Auth0 Token Vault:
+
+![Phase 2 connected Google Calendar reminders](docs/screenshots/app-04-phase2-calendar-connected.png)
+
+---
+
 ## Architecture
 
 ```mermaid
