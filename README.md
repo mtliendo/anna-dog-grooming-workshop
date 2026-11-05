@@ -51,54 +51,90 @@ That's it. No Postgres, no Redis, no Auth0 CLI, no Google Cloud project yet.
 
 ---
 
-## Auth0 Dashboard setup
+## Auth0 Dashboard setup (November 2026 UI)
 
-All tenant work happens in the dashboard. Do **not** run the Auth0 CLI or call the Management API.
+All tenant work happens in the [Auth0 Dashboard](https://manage.auth0.com/). Do **not** run the Auth0 CLI or call the Management API. The screenshots below are from a real workshop tenant — your tenant slug will differ.
+
+### 0. Dismiss the new-tenant popups
+
+If **"Meet your new navigation"** pops up, click **"Maybe later"** and then click the **X** to close. The **22-day trial** banner at the top is normal on new Free accounts.
 
 ### 1. Create a Regular Web Application
 
-1. Open [Auth0 Dashboard](https://manage.auth0.com/) → **Applications → Applications → Create Application**.
+**Applications → Applications → + Create Application**
+
+1. Leave **Create Manually** selected (not "Import from URL").
 2. Name it `Anna's Dog Grooming`.
-3. Choose **Regular Web Applications** (not SPA, not Native). Next.js keeps a client secret on the server.
-4. Create.
+3. Explicitly select **Regular Web Application**.
+4. Click **Create**.
 
-### 2. Point it at localhost
+> **Don't rush Create.** **Native** is preselected by default. Next.js keeps a client secret on the server — if you leave Native selected, login will fail.
 
-On the **Settings** tab, paste:
+![Create Application modal with Regular Web Application selected](docs/screenshots/02-create-app-modal.png)
 
-| Setting | Value |
+### 2. Copy Domain, Client ID, and Client Secret
+
+The app opens on **Quickstart**. Click the **Settings** tab.
+
+Copy these into `.env.local` (create it with `cp .env.example .env.local`):
+
+| `.env.local` | Where it lives |
 | --- | --- |
-| Allowed Callback URLs | `http://localhost:3000/auth/callback` |
-| Allowed Logout URLs | `http://localhost:3000` |
-| Allowed Web Origins | `http://localhost:3000` |
+| `AUTH0_DOMAIN` | **Domain** — the full `<your-tenant>.us.auth0.com` (or `.auth0.com`) hostname. It appears here on **Settings**, not in the top bar. No `https://`. |
+| `AUTH0_CLIENT_ID` | **Client ID** |
+| `AUTH0_CLIENT_SECRET` | **Client Secret** (click the eye to reveal; never commit it) |
+| `AUTH0_SECRET` | Generate locally: `openssl rand -hex 32` |
+| `APP_BASE_URL` | `http://localhost:3000` |
 
-Scroll to the bottom and **Save Changes**.
-
-### 3. Fill in `.env.local`
-
-```bash
-cp .env.example .env.local
-```
+![Settings tab — Domain, Client ID, and a masked Client Secret](docs/screenshots/04-app-settings-top.png)
 
 ```
 AUTH0_SECRET=          # openssl rand -hex 32
 APP_BASE_URL=http://localhost:3000
-AUTH0_DOMAIN=          # e.g. dev-abc123.us.auth0.com  (no https://)
-AUTH0_CLIENT_ID=       # from the application Settings tab
-AUTH0_CLIENT_SECRET=   # from the same tab
+AUTH0_DOMAIN=          # e.g. your-tenant.us.auth0.com  (no https://)
+AUTH0_CLIENT_ID=       # from the Settings tab
+AUTH0_CLIENT_SECRET=   # from the same Settings tab
 ```
 
-`AUTH0_DOMAIN` is the hostname only. `APP_BASE_URL` is how the SDK builds `/auth/callback`.
+`AUTH0_DOMAIN` is the hostname only. `APP_BASE_URL` is how the SDK builds `/auth/callback`. Restart `npm run dev` after saving.
 
-Restart `npm run dev` after saving.
+### 3. Allowed URLs live on the **URLs** tab
 
-### 4. Try both login methods
+Callback, Logout, and Web Origins are **no longer on Settings**. Click the **URLs** tab (right next to Settings).
 
-Auth0 tenants ship with **Username-Password-Authentication** and a **Google** social connection already on.
+| Field | Value |
+| --- | --- |
+| Allowed Callback URLs | `http://localhost:3000/auth/callback` |
+| Allowed Logout URLs | `http://localhost:3000` |
+| Allowed Web Origins (CORS) | `http://localhost:3000` |
 
-- **Email + password** — click **Sign up**, create a customer.  
-  **Pro tip:** new Auth0 tenants require a **15+ character** password by default. `AnnaLovesDoodles!` works.
-- **Google** — the default Google connection uses Auth0's built-in *developer* keys. That's perfect for "can I sign in?" in Phase 1.
+After each URL, press **Enter** so it turns into a chip with a **DEV** badge. Then click **Save** in the floating **"You have unsaved changes"** bar at the bottom.
+
+![URLs tab with DEV chips for callback, logout, and CORS](docs/screenshots/05-app-uris.png)
+
+The in-app **Workshop Setup Needed** card lists these same three values and points you at the **URLs** tab.
+
+### 4. Connections are already on — and the 15-character password
+
+Open the **Connections** tab on the same application. Both **Username-Password-Authentication** and **google-oauth2** are toggled **ON** by default. You do not need to enable anything extra for Phase 1 login.
+
+![Connections tab with Username-Password-Authentication and google-oauth2 enabled](docs/screenshots/06-app-connections.png)
+
+#### Email + password
+
+Click **Sign up** in the app and create a customer.
+
+> **Pro tip — 15-character minimum, zero composition rules.** New Auth0 tenants follow NIST: **Authentication → Database → Username-Password-Authentication → Authentication Methods → Password → Configure**. There is no "must include a number / symbol" rule — just 15+ characters. A passphrase like `sunny-poodle-bath-2026` works.
+
+![Password policy drawer: 15-character minimum, no extra composition rules](docs/screenshots/08-password-policy-default.png)
+
+#### Google
+
+The default Google connection uses Auth0's built-in *developer* keys. That's perfect for "can I sign in?" in Phase 1.
+
+The yellow banner **"This connection is using Auth0 development keys"** on **Authentication → Social → google-oauth2** is completely expected. Leave Client ID / Client Secret blank for now.
+
+![google-oauth2 using Auth0 development keys — expected in Phase 1](docs/screenshots/07-google-social-default-dev-keys.png)
 
 > **Why we'll bring our own Google OAuth keys in Phase 2:** Auth0's shared Google dev keys are fine for login. They do **not** issue refresh tokens, and they cannot be used with **Token Vault / Connected Accounts**. Phase 2 swaps in a Google Cloud OAuth client so Anna can drop a reminder on the customer's real calendar *without this app ever storing a Google refresh token*.
 
