@@ -108,6 +108,18 @@ export async function listDogs(userSub: string): Promise<Dog[]> {
   return result.rows as unknown as Dog[];
 }
 
+export async function findDogByName(
+  userSub: string,
+  name: string,
+): Promise<Dog | null> {
+  const db = await initDb();
+  const result = await db.execute({
+    sql: "SELECT * FROM dogs WHERE user_sub = ? AND lower(name) = lower(?) LIMIT 1",
+    args: [userSub, name.trim()],
+  });
+  return (result.rows[0] as unknown as Dog) ?? null;
+}
+
 export async function addDog(
   userSub: string,
   input: { name: string; breed: string; notes?: string },

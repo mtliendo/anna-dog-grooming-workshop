@@ -1,23 +1,47 @@
 import { AppointmentPanel } from "@/components/appointment-panel";
 import { CalendarCard } from "@/components/calendar-card";
 import { DogPanel } from "@/components/dog-panel";
+import { McpPanel } from "@/components/mcp-panel";
 import { SetupChecklist } from "@/components/setup-checklist";
 import { WelcomeHero } from "@/components/welcome-hero";
 import { getSessionSafe } from "@/lib/auth0";
-import { getEnvChecklist, isAuth0Configured } from "@/lib/config";
+import {
+  getEnvChecklist,
+  getMcpResourceUrl,
+  isAuth0Configured,
+  MCP_SCOPES,
+} from "@/lib/config";
 import { listAppointments, listDogs } from "@/lib/db";
 import { isGoogleCalendarConnected } from "@/lib/google-calendar";
 
 export const dynamic = "force-dynamic";
 
 export default async function HomePage() {
+  const mcp = (
+    <McpPanel
+      endpoint={getMcpResourceUrl()}
+      audience={getMcpResourceUrl()}
+      scopes={MCP_SCOPES}
+    />
+  );
+
   if (!isAuth0Configured()) {
-    return <SetupChecklist items={getEnvChecklist()} />;
+    return (
+      <>
+        <SetupChecklist items={getEnvChecklist()} />
+        {mcp}
+      </>
+    );
   }
 
   const session = await getSessionSafe();
   if (!session?.user?.sub) {
-    return <WelcomeHero />;
+    return (
+      <>
+        <WelcomeHero />
+        {mcp}
+      </>
+    );
   }
 
   const [dogs, appointments, calendarConnected] = await Promise.all([
@@ -48,6 +72,11 @@ export default async function HomePage() {
         <DogPanel dogs={dogs} />
         <AppointmentPanel dogs={dogs} appointments={appointments} />
       </div>
+      <McpPanel
+        endpoint={getMcpResourceUrl()}
+        audience={getMcpResourceUrl()}
+        scopes={MCP_SCOPES}
+      />
     </>
   );
 }

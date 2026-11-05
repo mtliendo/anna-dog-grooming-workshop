@@ -280,6 +280,11 @@ img {
   background: color-mix(in srgb, var(--terracotta-soft) 40%, var(--paper-card));
 }
 
+.mcp-panel {
+  margin: 22px 0 0;
+  border-color: #cfe3d6;
+}
+
 .card-title {
   font-family: var(--font-display), "Fraunces", serif;
   font-size: 1.35rem;

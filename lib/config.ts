@@ -2,10 +2,30 @@ export const APP_BASE_URL =
   process.env.APP_BASE_URL?.trim() || "http://localhost:3000";
 
 export const WORKSHOP_PHASE = {
-  number: 2,
-  slug: "token-vault",
-  label: "Phase 2 · Token Vault",
+  number: 3,
+  slug: "secure-mcp",
+  label: "Phase 3 · Secure MCP",
 } as const;
+
+export const MCP_SCOPES = ["bookings:read", "bookings:write"] as const;
+
+export function getMcpPublicUrl(): string {
+  const raw =
+    process.env.MCP_PUBLIC_URL?.trim() ||
+    process.env.APP_BASE_URL?.trim() ||
+    "http://localhost:3000";
+  return raw.replace(/\/$/, "");
+}
+
+export function getMcpResourceUrl(): string {
+  return process.env.AUTH0_MCP_AUDIENCE?.trim() || `${getMcpPublicUrl()}/mcp`;
+}
+
+export function getAuth0Issuer(): string | null {
+  const domain = process.env.AUTH0_DOMAIN?.trim();
+  if (!domain || domain.toLowerCase().includes("your-tenant")) return null;
+  return `https://${domain.replace(/^https?:\/\//, "").replace(/\/$/, "")}/`;
+}
 
 export const GOOGLE_CONNECTION = "google-oauth2";
 export const GOOGLE_CALENDAR_SCOPES = [
@@ -81,6 +101,18 @@ export function getEnvChecklist(): EnvStatus[] {
         process.env.AUTH0_CLIENT_SECRET,
       ),
       hint: "From the same Regular Web Application settings tab",
+    },
+    {
+      name: "MCP_PUBLIC_URL",
+      required: false,
+      configured: Boolean(process.env.MCP_PUBLIC_URL?.trim()),
+      hint: "Optional. Defaults to APP_BASE_URL. Set to your ngrok/cloudflared URL for cloud agents.",
+    },
+    {
+      name: "AUTH0_MCP_AUDIENCE",
+      required: false,
+      configured: Boolean(process.env.AUTH0_MCP_AUDIENCE?.trim()),
+      hint: "Optional. Defaults to {MCP_PUBLIC_URL}/mcp — must match the Auth0 API Identifier.",
     },
   ];
 }

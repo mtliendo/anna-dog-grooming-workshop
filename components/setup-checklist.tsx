@@ -6,7 +6,7 @@ import {
 import { StatusDot } from "@/components/icons";
 
 export function SetupChecklist({ items }: { items: EnvStatus[] }) {
-  const missing = items.filter((item) => !item.configured);
+  const missing = items.filter((item) => item.required && !item.configured);
   const callback = getCallbackUrl();
   const logout = getLogoutUrl();
 
@@ -34,8 +34,16 @@ export function SetupChecklist({ items }: { items: EnvStatus[] }) {
             <div>
               <div className="row">
                 <strong className="mono">{item.name}</strong>
-                <span className={item.configured ? "badge badge-sage" : "badge"}>
-                  {item.configured ? "Set" : "Missing"}
+                <span
+                  className={
+                    item.configured
+                      ? "badge badge-sage"
+                      : item.required
+                        ? "badge"
+                        : "badge badge-terracotta"
+                  }
+                >
+                  {item.configured ? "Set" : item.required ? "Missing" : "Optional"}
                 </span>
               </div>
               <p className="muted" style={{ margin: "6px 0 0" }}>
