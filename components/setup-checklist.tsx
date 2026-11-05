@@ -63,7 +63,11 @@ export function SetupChecklist({ items }: { items: EnvStatus[] }) {
         </div>
         <div>
           <p className="muted" style={{ margin: "0 0 8px" }}>
-            Paste these URLs into the Auth0 application settings
+            Paste these on the Auth0 app&apos;s <strong>URLs</strong> tab (next
+            to Settings). Press <span className="mono">Enter</span> after each
+            one so it becomes a chip with a <strong>DEV</strong> badge, then
+            click <strong>Save</strong> in the floating &quot;You have unsaved
+            changes&quot; bar.
           </p>
           <pre className="pre">{`Allowed Callback URLs
 ${callback}
@@ -71,7 +75,7 @@ ${callback}
 Allowed Logout URLs
 ${logout}
 
-Allowed Web Origins
+Allowed Web Origins (CORS)
 ${logout}`}</pre>
         </div>
         {missing.length > 0 ? (

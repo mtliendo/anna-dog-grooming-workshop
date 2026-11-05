@@ -12,6 +12,10 @@ npm run dev
 
 The salon UI, SQLite file, and Google Calendar reminders from earlier phases keep working.
 
+If the in-app **Workshop Setup Needed** card is still up, paste callback / logout / CORS values on the application's **URLs** tab (not Settings), press **Enter** so each becomes a **DEV** chip, then **Save**.
+
+Screenshots below are from a real workshop tenant. In prose we write **`<YOUR_AUTH0_DOMAIN>`** (for example `your-tenant.us.auth0.com`). The images still show the demo tenant we used while recording — your slug will be different.
+
 ---
 
 ## Architecture
@@ -62,59 +66,78 @@ AUTH0_MCP_AUDIENCE=https://xyz.trycloudflare.com/mcp
 
 ---
 
-## Auth0 Dashboard setup
+## Auth0 Dashboard setup (November 2026 UI)
 
-Do this by hand. Toggles auto-save unless noted.
+Do this by hand. No CLI, no Management API.
 
-### 1. Enable Dynamic Client Registration (and CIMD)
+### 1. Enable DCR & CIMD
 
 **Settings → Advanced**
 
-- Enable **Dynamic Client Registration (DCR)**
-- Enable **OIDC Dynamic Application Registration** / **CIMD** if the toggle is present
+Toggle **ON**:
+
+- **Dynamic Client Registration (DCR)**
+- **Client ID Metadata Document (CIMD) Registration** — if your MCP client uses CIMD
+
+Both toggles **auto-save immediately**. No extra Save click on this page.
+
+![Settings → Advanced with DCR and CIMD toggled on](docs/screenshots/20-tenant-advanced-dcr-enabled.png)
 
 The 2026 MCP spec prefers Client ID Metadata Documents; DCR stays as the workshop-friendly fallback.
 
-### 2. Promote the database connection to domain level
+### 2. Promote connections to domain level
 
-**Authentication → Database → Username-Password-Authentication**
+Dynamically registered MCP clients cannot use a connection that is only enabled for *Anna's Dog Grooming*. Domain-level is what lets Cursor / Claude / Inspector actually log the customer in.
 
-1. Open **Applications** (or the connection settings) and **Promote to Domain Level**.
-2. Scroll to the bottom and click **Save**.
+Do **both** connections:
 
-Dynamically registered third-party MCP clients cannot use a connection that is only enabled for *Anna's Dog Grooming*. Domain-level is what lets Cursor / Claude / Inspector actually log the customer in.
+1. **Authentication → Database → Username-Password-Authentication**
+2. **Authentication → Social → google-oauth2**
 
-### 3. Create the API
+On each page, toggle **Promote Connection to Domain Level** **ON**, then click **Save** at the bottom.
 
-**Applications → APIs → Create API**
+![Username-Password-Authentication with Promote Connection to Domain Level on](docs/screenshots/21-db-connection-domain-level.png)
+
+### 3. Create the MCP API
+
+**Applications → APIs → + Create API**
 
 | Field | Value |
 | --- | --- |
 | Name | `Anna's Dog Grooming MCP` |
-| Identifier | `http://localhost:3000/mcp` (or your tunnel URL + `/mcp`) |
-| Profile | **Auth0 / RFC 9068** |
-| Signing | RS256 |
+| Identifier | `http://localhost:3000/mcp` (or `https://<your-tunnel>/mcp` if you set `MCP_PUBLIC_URL`) |
+| JSON Web Token Profile | **RFC 9068** |
+| Signing Algorithm | **RS256** |
 
-**Permissions**
+![Create API modal — RFC 9068 and identifier /mcp](docs/screenshots/22-create-mcp-api-modal.png)
+
+### 4. Add permissions
+
+On the new API's **Permissions** tab, add:
 
 | Permission | Description |
 | --- | --- |
 | `bookings:read` | List dogs and appointments |
 | `bookings:write` | Add a dog or book a visit |
 
-### 4. Access Policies — the Pro Tip everyone misses
+![MCP API Permissions tab with bookings:read and bookings:write](docs/screenshots/23-mcp-api-permissions.png)
 
-On the API:
+### 5. Application Access Policy — the unlock everyone misses
 
-1. **Access Policies** → **User-delegated access** → **All applications allowed**.
-2. **Default Permissions for third-party applications** → set to **Authorized**.
-3. Select **`bookings:read`** and **`bookings:write`**.
+Stay on the API and open the **Settings** tab. Scroll to **Application Access Policy** and **Default Permissions for third-party applications**.
 
-> **Pro tip:** this defaults to **Unauthorized**. If you skip it, MCP clients register fine, the customer logs in, and the token arrives with **zero** bookings scopes. Selecting the scopes here is what lets DCR clients request them.
+1. **Application Access Policy → User-delegated Access** → **All apps allowed**
+2. **Default Permissions for third-party applications → User-delegated Access** → **Authorized - Pick and choose permissions**
+3. Select both **`bookings:read`** and **`bookings:write`**
+4. Click **Save**
 
-### 5. Free-plan hygiene
+![Application Access Policy All apps allowed and Authorized pick-and-choose permissions](docs/screenshots/24-mcp-api-application-access-authorized.png)
 
-Each MCP client that dynamically registers counts as **1 application** toward the Free plan's **10-app** limit. Periodically delete unused DCR clients under **Applications**.
+> **This is the key unlock.** The default is **Unauthorized**. If you leave it there, MCP clients register fine, the customer logs in, and the token arrives with **zero** bookings scopes. Switching to **Authorized - Pick and choose permissions** and selecting both scopes is what lets DCR MCP clients request `bookings:read` / `bookings:write`.
+
+### Free-plan hygiene
+
+Each MCP client that dynamically registers counts as **1 application** toward the Free plan's **10-app** limit. Periodically delete unused DCR clients under **Applications → Applications**.
 
 ---
 
@@ -128,6 +151,8 @@ Each MCP client that dynamically registers counts as **1 application** toward th
 | `book_appointment` | `bookings:write` | `dog_name`, `service`, `date`, `time`, optional `notes` |
 
 Every query is `WHERE user_sub = ?` using the JWT `sub`. Book with an agent, click **Refresh** (or wait 8 seconds) on [http://localhost:3000](http://localhost:3000) — the appointment is already in the web UI.
+
+The **MCP Server Ready** panel on `/` shows the public resource URL, audience, and a copy-paste Cursor / Inspector snippet once `.env.local` is set.
 
 ---
 
@@ -181,11 +206,11 @@ MCP_PUBLIC_URL=https://YOUR-TUNNEL.trycloudflare.com
 AUTH0_MCP_AUDIENCE=https://YOUR-TUNNEL.trycloudflare.com/mcp
 ```
 
-Create (or update) the Auth0 API Identifier to that same audience, add `https://YOUR-TUNNEL.trycloudflare.com/auth/callback` to Allowed Callback URLs only if the *web* login also goes through the tunnel. For MCP-only tunnels, the API Identifier is the important match.
+Create (or update) the Auth0 API Identifier to that same audience. Add `https://YOUR-TUNNEL.trycloudflare.com/auth/callback` on the **URLs** tab only if the *web* login also goes through the tunnel. For MCP-only tunnels, the API Identifier is the important match.
 
 ---
 
-## Extra credit / after the workshop
+## Extra Credit: Chaining MCP + Token Vault
 
 Phase 2 already writes calendar reminders from the **web** session via Token Vault. Want `book_appointment` in MCP to do the same?
 
@@ -209,7 +234,7 @@ const { accessToken: google } = await api.getAccessTokenForConnection({
 
 Dashboard extras for this exchange:
 
-1. The MCP API needs a **Custom API Client** (Applications → APIs → Anna's Dog Grooming MCP → Add Application) with the **Token Vault** grant.
+1. The MCP API needs a **Custom API Client** (**Applications → APIs → Anna's Dog Grooming MCP → Add Application**) with the **Token Vault** grant.
 2. The customer must have already clicked **Connect Google Calendar** in Phase 2 (or you initiate Connected Accounts from the agent).
 3. Call `createAppointmentReminder` from `lib/google-calendar.ts` with that Google access token, then `saveCalendarEvent`.
 
