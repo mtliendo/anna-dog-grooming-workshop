@@ -224,6 +224,54 @@ Create (or update) the Auth0 API Identifier to that same audience. Add `https://
 
 ---
 
+## Test your MCP server
+
+### 1. Optional 401 + RFC 9728 sanity check
+
+Before connecting an agent, prove unauthenticated calls are rejected and that clients get pointed at Auth0:
+
+```bash
+curl -i http://localhost:3000/mcp
+```
+
+Look for `HTTP/1.1 401 Unauthorized` and `WWW-Authenticate: Bearer resource_metadata="http://localhost:3000/.well-known/oauth-protected-resource"`. That 401 is the handshake — MCP clients follow `resource_metadata` into RFC 9728, then DCR / consent. No token, no tools.
+
+### 2. Browser OAuth + consent
+
+The first time Cursor, Claude, MCP Inspector, or Grok Bot connects, it opens a browser. Sign in as the **same customer** you used at [http://localhost:3000](http://localhost:3000), then approve **`bookings:read`** and **`bookings:write`** on **Anna's Dog Grooming MCP**.
+
+The JWT `sub` is the row key. A different account means an empty book — that's isolation working, not a broken server.
+
+### 3. Prompts to try (all four tools)
+
+**Read dogs + service menu** (`list_dogs` · `bookings:read`)
+
+> "What dogs do I have registered at Anna's Dog Grooming, and what services are on the menu?"
+
+**Read upcoming bookings** (`list_appointments` · `bookings:read`)
+
+> "Do I have any upcoming grooming appointments scheduled?"
+
+**Register a new dog** (`add_dog` · `bookings:write`)
+
+> "Register my dog Maple — she's a Cockapoo who gets nervous around loud dryers."
+
+**Book a visit** (`book_appointment` · `bookings:write`)
+
+> "Book Maple for a Puppy Intro Trim on 2026-11-18 at 10:30 with a note to go slow on her paws."
+
+**Chain multiple tools** (`list_dogs` → `add_dog` → `book_appointment`)
+
+> "Check Anna's service menu, add my Golden Retriever Biscuit if he isn't registered yet, and book him a Bath & Brush on 2026-11-20 at 14:00."
+
+### 4. Verify in the salon UI + isolation bonus
+
+Switch back to [http://localhost:3000](http://localhost:3000). The dashboard auto-refreshes every **8 seconds**, or click **Refresh** on the MCP panel. Maple, Biscuit, and the new visits should already be on that customer's roster.
+
+**Bonus — 30-second isolation check:** open an incognito window at [http://localhost:3000](http://localhost:3000), sign up / sign in as a **second** customer, and confirm the roster and appointment book are empty. Every query is `WHERE user_sub = ?` using the JWT `sub`.
+
+---
+
 ## Extra Credit: Chaining MCP + Token Vault
 
 Phase 2 already writes calendar reminders from the **web** session via Token Vault. Want `book_appointment` in MCP to do the same?
