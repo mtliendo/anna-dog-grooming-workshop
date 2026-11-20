@@ -2,11 +2,18 @@
   "name": "anna-dog-grooming-workshop",
   "version": "1.0.0",
   "private": true,
+  "engines": {
+    "node": ">=20.9.0"
+  },
   "scripts": {
+    "predev": "node scripts/check-node.mjs",
     "dev": "next dev",
+    "prebuild": "node scripts/check-node.mjs",
     "build": "next build",
     "start": "next start",
-    "lint": "eslint ."
+    "lint": "eslint .",
+    "test": "node --test scripts/check-node.test.mjs",
+    "inspector": "node scripts/check-node.mjs inspector && npx -y @modelcontextprotocol/inspector@2.16.0"
   },
   "dependencies": {
     "@auth0/auth0-api-js": "^1.7.0",
