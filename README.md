@@ -260,7 +260,7 @@ The first time Cursor, Claude, MCP Inspector, or Grok Bot connects, it opens a b
 
 The JWT `sub` is the row key. A different account means an empty book — that's isolation working, not a broken server.
 
-If the consent page shows **`server_error: Internal error`**, the browser still had a salon sign-in when the client started its login. Sign out of the salon (`/auth/logout`), clear the client's saved login (MCP Inspector: the server's **Settings → OAuth Settings → Clear stored OAuth state**), and connect again. Signing out of the salon before you connect avoids it.
+If the consent page shows **`server_error: Internal error`**, the browser still had a salon sign-in when the client started its login. Sign out of the salon (`/auth/logout`, then confirm with **Yes**), clear the client's saved login (MCP Inspector: the **Settings** button on the server card → **OAuth Settings** → **Clear stored OAuth state**), and connect again. Signing out of the salon before you connect avoids it.
 
 ### 3. Prompts to try (all four tools)
 
