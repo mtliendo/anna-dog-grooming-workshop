@@ -2,11 +2,17 @@
   "name": "anna-dog-grooming-workshop",
   "version": "1.0.0",
   "private": true,
+  "engines": {
+    "node": ">=20.9.0"
+  },
   "scripts": {
+    "predev": "node scripts/check-node.mjs",
     "dev": "next dev",
+    "prebuild": "node scripts/check-node.mjs",
     "build": "next build",
     "start": "next start",
-    "lint": "eslint ."
+    "lint": "eslint .",
+    "test": "node --test scripts/check-node.test.mjs"
   },
   "dependencies": {
     "@auth0/nextjs-auth0": "^4.33.0",
