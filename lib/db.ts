@@ -1,6 +1,11 @@
-import { createClient, type Client } from "@libsql/client";
+import { createClient } from "@libsql/client";
 import { mkdirSync } from "node:fs";
 import path from "node:path";
+import {
+  createPostgresClient,
+  POSTGRES_SCHEMA,
+  type DbClient,
+} from "@/lib/db-postgres";
 import { SAMPLE_DOG, getService } from "@/lib/services";
 
 /**
@@ -10,8 +15,11 @@ import { SAMPLE_DOG, getService } from "@/lib/services";
 const DATA_DIR = path.join(process.cwd(), "data");
 const DB_URL = "file:./data/anna-grooming.db";
 
-let client: Client | null = null;
-let initialized = false;
+// Hosted deployments set DATABASE_URL (Postgres); the workshop uses the file.
+const POSTGRES_URL = process.env.DATABASE_URL?.trim();
+
+let client: DbClient | null = null;
+let initPromise: Promise<DbClient> | null = null;
 
 export type Dog = {
   id: number;
@@ -37,7 +45,10 @@ export type Appointment = {
   dog_breed?: string;
 };
 
-function getClient(): Client {
+function getClient(): DbClient {
+  if (!client && POSTGRES_URL) {
+    client = createPostgresClient(POSTGRES_URL);
+  }
   if (!client) {
     mkdirSync(DATA_DIR, { recursive: true });
     client = createClient({ url: DB_URL });
@@ -45,9 +56,22 @@ function getClient(): Client {
   return client;
 }
 
-export async function initDb(): Promise<Client> {
+// Shared promise: concurrent first calls (e.g. the home page's two reads) create the schema once.
+export function initDb(): Promise<DbClient> {
+  initPromise ??= createSchema().catch((error) => {
+    initPromise = null;
+    throw error;
+  });
+  return initPromise;
+}
+
+async function createSchema(): Promise<DbClient> {
   const db = getClient();
-  if (initialized) return db;
+
+  if (POSTGRES_URL) {
+    await db.executeMultiple(POSTGRES_SCHEMA);
+    return db;
+  }
 
   await db.executeMultiple(`
     CREATE TABLE IF NOT EXISTS dogs (
@@ -79,12 +103,11 @@ export async function initDb(): Promise<Client> {
   await ensureColumn(db, "appointments", "calendar_event_id", "TEXT");
   await ensureColumn(db, "appointments", "calendar_event_link", "TEXT");
 
-  initialized = true;
   return db;
 }
 
 async function ensureColumn(
-  db: Client,
+  db: DbClient,
   table: string,
   column: string,
   type: string,

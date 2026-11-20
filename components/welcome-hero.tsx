@@ -15,7 +15,7 @@ export function WelcomeHero() {
         <p className="lede">
           Customers sign in with Auth0 — email + password or the default Google
           connection — then register their dogs and book a bath, a full groom,
-          or a first puppy trim. Every row in SQLite is scoped to{" "}
+          or a first puppy trim. Every row in the database is scoped to{" "}
           <span className="mono">session.user.sub</span>.
         </p>
         <div className="row">

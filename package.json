@@ -12,7 +12,7 @@
     "build": "next build",
     "start": "next start",
     "lint": "eslint .",
-    "test": "node --test scripts/check-node.test.mjs",
+    "test": "node --test scripts/check-node.test.mjs scripts/db-postgres.test.mjs",
     "inspector": "node scripts/check-node.mjs inspector && npx -y @modelcontextprotocol/inspector@2.16.0"
   },
   "dependencies": {
@@ -20,6 +20,7 @@
     "@auth0/nextjs-auth0": "^4.33.0",
     "@libsql/client": "^0.18.0",
     "@modelcontextprotocol/server": "^2.4.0",
+    "@neondatabase/serverless": "^1.2.1",
     "mcp-handler": "^2.3.0",
     "next": "^16.4.5",
     "react": "^19.2.4",

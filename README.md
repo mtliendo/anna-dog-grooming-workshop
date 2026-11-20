@@ -216,6 +216,15 @@ Connect to `http://localhost:3000/mcp` with transport **Streamable HTTP**. The i
 }
 ```
 
+### Hosted MCP server (Vercel)
+
+Optional, for connecting a cloud agent (for example Devin under **Customize → MCPs**) without a tunnel. The local workshop steps above don't change.
+
+1. Create a Vercel project from this repo on the `phase-3-mcp` branch, and a Neon Postgres database (Vercel can't keep `./data/anna-grooming.db`).
+2. In Auth0, create a Regular Web Application with callback `https://<your-app>.vercel.app/auth/callback`, and an API whose Identifier is `https://<your-app>.vercel.app/mcp`, set up like the local one (same scopes, default third-party permissions, RBAC off).
+3. Set the Vercel env vars: the usual Auth0 values, `APP_BASE_URL=https://<your-app>.vercel.app`, and `DATABASE_URL`. Leave `MCP_PUBLIC_URL` and `AUTH0_MCP_AUDIENCE` unset; they default to `APP_BASE_URL`.
+4. Sign out of the hosted salon first, then add `https://<your-app>.vercel.app/mcp` to your agent and sign in when it asks (see the consent troubleshooting note under **Browser OAuth + consent**).
+
 ### Cloud agents (Grok Bot)
 
 ```bash
@@ -250,6 +259,8 @@ Look for `HTTP/1.1 401 Unauthorized` and `WWW-Authenticate: Bearer resource_meta
 The first time Cursor, Claude, MCP Inspector, or Grok Bot connects, it opens a browser. Sign in as the **same customer** you used at [http://localhost:3000](http://localhost:3000), then approve **`bookings:read`** and **`bookings:write`** on **Anna's Dog Grooming MCP**.
 
 The JWT `sub` is the row key. A different account means an empty book — that's isolation working, not a broken server.
+
+If the consent page shows **`server_error: Internal error`**, the browser still had a salon sign-in when the client started its login. Sign out of the salon (`/auth/logout`), clear the client's saved login (MCP Inspector: the server's **Settings → OAuth Settings → Clear stored OAuth state**), and connect again. Signing out of the salon before you connect avoids it.
 
 ### 3. Prompts to try (all four tools)
 

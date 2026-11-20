@@ -8,6 +8,7 @@ import {
   listDogs,
 } from "@/lib/db";
 import { getSubFromAuth } from "@/lib/auth0-mcp";
+import { APP_BASE_URL } from "@/lib/config";
 import {
   GROOMING_SERVICES,
   formatServiceLine,
@@ -159,7 +160,7 @@ export function registerMcpTools(server: McpServer) {
           date: appointment.date,
           time: appointment.time,
         },
-        hint: "Refresh http://localhost:3000 — the new visit is already in the web UI.",
+        hint: `Refresh ${APP_BASE_URL} — the new visit is already in the web UI.`,
       });
     },
   );
