@@ -19,7 +19,7 @@ const DB_URL = "file:./data/anna-grooming.db";
 const POSTGRES_URL = process.env.DATABASE_URL?.trim();
 
 let client: DbClient | null = null;
-let initialized = false;
+let initPromise: Promise<DbClient> | null = null;
 
 export type Dog = {
   id: number;
@@ -56,13 +56,20 @@ function getClient(): DbClient {
   return client;
 }
 
-export async function initDb(): Promise<DbClient> {
+// Shared promise: concurrent first calls (e.g. the home page's two reads) create the schema once.
+export function initDb(): Promise<DbClient> {
+  initPromise ??= createSchema().catch((error) => {
+    initPromise = null;
+    throw error;
+  });
+  return initPromise;
+}
+
+async function createSchema(): Promise<DbClient> {
   const db = getClient();
-  if (initialized) return db;
 
   if (POSTGRES_URL) {
     await db.executeMultiple(POSTGRES_SCHEMA);
-    initialized = true;
     return db;
   }
 
@@ -96,7 +103,6 @@ export async function initDb(): Promise<DbClient> {
   await ensureColumn(db, "appointments", "calendar_event_id", "TEXT");
   await ensureColumn(db, "appointments", "calendar_event_link", "TEXT");
 
-  initialized = true;
   return db;
 }
 
