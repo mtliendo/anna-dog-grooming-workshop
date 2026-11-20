@@ -154,6 +154,8 @@ Stay on the API and open the **Settings** tab. Scroll to **Application Access Po
 
 > **This is the key unlock.** The default is **Unauthorized**. If you leave it there, MCP clients register fine, the customer logs in, and the token arrives with **zero** bookings scopes. Switching to **Authorized - Pick and choose permissions** and selecting both scopes is what lets DCR MCP clients request `bookings:read` / `bookings:write`.
 
+> Leave **RBAC Settings → Enable RBAC** off for this API. With RBAC on, Auth0 drops any scope the user has no role for, so the consent screen lists no permissions and the token again arrives without `bookings:*`.
+
 ### Free-plan hygiene
 
 Each MCP client that dynamically registers counts as **1 application** toward the Free plan's **10-app** limit. Periodically delete unused DCR clients under **Applications → Applications**.
