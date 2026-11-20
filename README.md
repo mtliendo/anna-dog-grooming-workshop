@@ -10,7 +10,7 @@ You're hired! Anna just opened a boutique grooming salon and needs software befo
 2. Let each customer register their dogs and book a grooming appointment.
 3. Store everything in a **local SQLite file** — scoped to `session.user.sub` so one customer never sees another customer's roster.
 
-No extra databases. No Auth0 CLI. No native C++ addons. Attendees only need **Node.js 20+** and **Git**.
+No extra databases. No Auth0 CLI. No native C++ addons. Attendees only need **Node.js 20.9 or newer** (24 LTS recommended) and **Git**.
 
 ```bash
 git clone https://github.com/mtliendo/anna-dog-grooming-workshop.git
@@ -57,7 +57,7 @@ flowchart LR
 
 ## Prerequisites
 
-- **Node.js 20+** and **npm** (this repo ships `package-lock.json` — please don't switch to pnpm/yarn mid-workshop)
+- **Node.js 20.9 or newer** and **npm** — Next.js 16 refuses to start on 20.0–20.8. Use **Node.js 24 LTS** (`nvm use` reads the repo's `.nvmrc`); Phase 3's MCP Inspector needs 24.22.1+ anyway. Check with `node -v`; `npm run dev` stops with a fix-it message if your version is too old. (This repo ships `package-lock.json` — please don't switch to pnpm/yarn mid-workshop)
 - **Git**
 - A free [Auth0](https://auth0.com/signup) account
 
