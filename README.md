@@ -216,6 +216,15 @@ Connect to `http://localhost:3000/mcp` with transport **Streamable HTTP**. The i
 }
 ```
 
+### Hosted MCP server (Vercel)
+
+Optional, for connecting a cloud agent (for example Devin under **Customize → MCPs**) without a tunnel. The local workshop steps above don't change.
+
+1. Create a Vercel project from this repo on the `phase-3-mcp` branch, and a Neon Postgres database (Vercel can't keep `./data/anna-grooming.db`).
+2. In Auth0, create a Regular Web Application with callback `https://<your-app>.vercel.app/auth/callback`, and an API whose Identifier is `https://<your-app>.vercel.app/mcp`, set up like the local one (same scopes, default third-party permissions, RBAC off).
+3. Set the Vercel env vars: the usual Auth0 values, `APP_BASE_URL=https://<your-app>.vercel.app`, and `DATABASE_URL`. Leave `MCP_PUBLIC_URL` and `AUTH0_MCP_AUDIENCE` unset; they default to `APP_BASE_URL`.
+4. Add `https://<your-app>.vercel.app/mcp` to your agent and sign in when it asks.
+
 ### Cloud agents (Grok Bot)
 
 ```bash
