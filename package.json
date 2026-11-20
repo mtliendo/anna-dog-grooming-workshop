@@ -12,7 +12,8 @@
     "build": "next build",
     "start": "next start",
     "lint": "eslint .",
-    "test": "node --test scripts/check-node.test.mjs"
+    "test": "node --test scripts/check-node.test.mjs",
+    "inspector": "node scripts/check-node.mjs inspector && npx -y @modelcontextprotocol/inspector@2.16.0"
   },
   "dependencies": {
     "@auth0/auth0-api-js": "^1.7.0",

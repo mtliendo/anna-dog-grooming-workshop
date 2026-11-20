@@ -14,7 +14,12 @@ npm run dev
 
 The salon UI, SQLite file, and Google Calendar reminders from earlier phases keep working.
 
-If the in-app **Workshop Setup Needed** card is still up, paste callback / logout / CORS values on the application's **URLs** tab (not Settings), press **Enter** so each becomes a **DEV** chip, then **Save**.
+Needs **Node.js 20.9 or newer** for the app, and **Node.js 24.22.1+** (or 22.23.4+) for MCP Inspector below, so use **Node.js 24 LTS** (`nvm use` reads `.nvmrc`). `npm run dev` stops with a fix-it message on older versions.
+
+If the in-app **Workshop Setup Needed** card is still up, work through it top to bottom:
+
+1. **Environment checklist first.** If any `.env.local` row is marked missing, fill it in (`cp .env.example .env.local` if the file does not exist yet), save, and restart `npm run dev`. The Auth0 URLs below do nothing until these values are real.
+2. **Then the Auth0 URLs.** Once every required row is set, paste the callback / logout / CORS values on the application's **URLs** tab (not Settings), press **Enter** so each becomes a **DEV** chip, then **Save**.
 
 Screenshots below are from a real workshop tenant. In prose we write **`<YOUR_AUTH0_DOMAIN>`** (for example `your-tenant.us.auth0.com`). The images still show the demo tenant we used while recording — your slug will be different.
 
@@ -189,8 +194,10 @@ Cursor discovers Auth0 from `/.well-known/oauth-protected-resource`, registers, 
 ### MCP Inspector
 
 ```bash
-npx @modelcontextprotocol/inspector
+npm run inspector   # = npx -y @modelcontextprotocol/inspector@2.16.0
 ```
+
+The workshop pins Inspector **2.16.0**, which needs **Node.js 24.22.1+** (or 22.23.4+ / 26.12.1+); unpinned `npx @modelcontextprotocol/inspector` pulls whatever is newest and crashes on older Node. `npm run inspector` checks your Node version first and tells you how to fix it.
 
 Connect to `http://localhost:3000/mcp` with transport **Streamable HTTP**. The inspector will follow the 401 + resource metadata into Auth0.
 
@@ -319,4 +326,6 @@ Same SQLite row, same `htmlLink` badge — now written by the agent.
 npm run dev
 npm run build
 npm run lint
+npm run inspector  # MCP Inspector 2.16.0 (Node.js 24.22.1+)
+npm test           # Node.js version check
 ```
