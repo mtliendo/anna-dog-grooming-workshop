@@ -16,7 +16,12 @@ Your Phase 1 SQLite file carries over. `lib/db.ts` runs an idempotent `ALTER TAB
 
 Screenshots below are from a real workshop tenant. In prose we write **`<YOUR_AUTH0_DOMAIN>`** (for example `your-tenant.us.auth0.com`). The images still show the demo tenant we used while recording — your slug will be different.
 
-If the in-app **Workshop Setup Needed** card is still up, paste callback / logout / CORS values on the application's **URLs** tab (not Settings), press **Enter** so each becomes a **DEV** chip, then **Save**.
+Needs **Node.js 20.9 or newer** (24 LTS recommended; `nvm use` reads `.nvmrc`). `npm run dev` stops with a fix-it message on older versions.
+
+If the in-app **Workshop Setup Needed** card is still up, work through it top to bottom:
+
+1. **Environment checklist first.** If any `.env.local` row is marked missing, fill it in (`cp .env.example .env.local` if the file does not exist yet), save, and restart `npm run dev`. The Auth0 URLs below do nothing until these values are real.
+2. **Then the Auth0 URLs.** Once every required row is set, paste the callback / logout / CORS values on the application's **URLs** tab (not Settings), press **Enter** so each becomes a **DEV** chip, then **Save**.
 
 ---
 
@@ -83,14 +88,23 @@ Do this in [Google Cloud Console](https://console.cloud.google.com/) before touc
 
 ### 3. Branding & Audience (Google Auth Platform)
 
-Open **Google Auth Platform → Branding** and fill in the app name / support email.
+Open **Google Auth Platform**. On a brand-new project Google first shows **Google Auth Platform not configured yet** with a **Get started** button. Click it and finish the four-step wizard:
 
-Then open **Audience**:
+1. **App information:** app name (for example `Anna Dog Grooming Workshop`) and **User support email** (pick your own address from the dropdown) → **Next**.
+2. **Audience:** **External** → **Next**.
+3. **Contact information:** your email address → **Next**.
+4. **Finish:** check **I agree to the Google API Services: User Data Policy** → **Continue** → **Create**.
+
+If your project already had Google Auth Platform configured, skip the wizard and check **Branding** for the app name / support email instead.
+
+Then open **Audience** and confirm:
 
 - **User type:** **External**
 - **Publishing status:** **Testing**
 
-> **Important Pro Tip — Test users:** under **Test users** you **must** add an email associated with a **real Google / Gmail or Google Workspace account**. Google rejects `+alias` addresses and non-Google-account emails. If Connect fails with a vague "access denied" after consent, this is usually why.
+Under **Test users**, click **+ Add users**, enter the Google account you will sign in with, and **Save**. Confirm it by looking for your email in the **Test users** table. Ignore the counter above the table: right after saving it can read something like `0 users (1 test, -1 other)` even though the user was added.
+
+> **Important Pro Tip — Test users:** you **must** add an email associated with a **real Google / Gmail or Google Workspace account**. Google rejects `+alias` addresses and non-Google-account emails. If Connect fails with a vague "access denied" after consent, this is usually why.
 
 ![Google Auth Platform Audience — External, Testing, Test users](docs/screenshots/14-gcp-oauth-audience-testing.png)
 
@@ -243,4 +257,5 @@ npm run dev
 npm run dev
 npm run build
 npm run lint
+npm test     # Node.js version check
 ```

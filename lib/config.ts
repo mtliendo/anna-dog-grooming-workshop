@@ -7,7 +7,8 @@ export const WORKSHOP_PHASE = {
   label: "Phase 2 · Token Vault",
 } as const;
 
-export const GOOGLE_CONNECTION = "google-oauth2";
+export const GOOGLE_CONNECTION =
+  process.env.AUTH0_GOOGLE_CONNECTION?.trim() || "google-oauth2";
 export const GOOGLE_CALENDAR_SCOPES = [
   "openid",
   "profile",

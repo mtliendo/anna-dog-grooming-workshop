@@ -66,17 +66,17 @@ export async function isGoogleCalendarConnected(): Promise<boolean> {
 function appointmentDateTimes(appointment: Appointment) {
   const service = getService(appointment.service_id);
   const durationMin = service?.durationMin ?? 45;
-  const start = new Date(`${appointment.date}T${appointment.time}:00`);
-  const end = new Date(start.getTime() + durationMin * 60 * 1000);
+  // Wall-clock times in the salon's zone; Google applies `timeZone` to them.
+  const start = `${appointment.date}T${appointment.time}:00`;
+  const endUtc = new Date(`${start}Z`);
+  endUtc.setUTCMinutes(endUtc.getUTCMinutes() + durationMin);
+  const end = endUtc.toISOString().slice(0, 19);
   const timeZone =
-    Intl.DateTimeFormat().resolvedOptions().timeZone || "America/Los_Angeles";
+    process.env.SALON_TIME_ZONE?.trim() ||
+    Intl.DateTimeFormat().resolvedOptions().timeZone ||
+    "America/Los_Angeles";
 
-  return {
-    start: start.toISOString(),
-    end: end.toISOString(),
-    timeZone,
-    service,
-  };
+  return { start, end, timeZone, service };
 }
 
 export async function createAppointmentReminder(
