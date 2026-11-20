@@ -29,7 +29,7 @@ export function AppointmentPanel({
         Grooming appointments
       </h2>
       <p className="muted">
-        Booked rows live in the same SQLite file, keyed by your Auth0{" "}
+        Booked rows live in the same database, keyed by your Auth0{" "}
         <span className="mono">sub</span>. Refresh after an agent books one in
         a later phase and it will be sitting right here.
       </p>

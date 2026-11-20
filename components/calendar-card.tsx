@@ -24,7 +24,7 @@ export function CalendarCard({
           </h2>
           <p className="muted" style={{ margin: 0, maxWidth: "62ch" }}>
             {connected
-              ? "Auth0 Token Vault is holding a Google refresh token for this customer. Booking a visit — or clicking Add Reminder — writes a real event on their primary calendar. This app never stores the Google token in SQLite."
+              ? "Auth0 Token Vault is holding a Google refresh token for this customer. Booking a visit — or clicking Add Reminder — writes a real event on their primary calendar. This app never stores the Google token in its database."
               : "Anna wants reminders on the customer's own Google Calendar. Connect once; Auth0 Token Vault keeps the Google tokens. If this fails with Auth0's default Google developer keys, that's expected — Phase 2 needs your own Google Cloud OAuth client."}
           </p>
           {email ? (
