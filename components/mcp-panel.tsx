@@ -3,6 +3,9 @@
 import { useRouter } from "next/navigation";
 import { useEffect } from "react";
 
+const REFRESH_MS = 8000;
+const ACTIVE_WINDOW_MS = 5 * 60 * 1000;
+
 export function McpPanel({
   endpoint,
   audience,
@@ -15,8 +18,22 @@ export function McpPanel({
   const router = useRouter();
 
   useEffect(() => {
-    const id = window.setInterval(() => router.refresh(), 8000);
-    return () => window.clearInterval(id);
+    // Live refresh only while someone is looking, so an idle tab lets Neon scale to zero.
+    let lastActive = Date.now();
+    const markActive = () => {
+      lastActive = Date.now();
+    };
+    const events = ["pointerdown", "pointermove", "keydown", "focus"] as const;
+    for (const name of events) window.addEventListener(name, markActive, { passive: true });
+    const id = window.setInterval(() => {
+      if (document.visibilityState !== "visible") return;
+      if (Date.now() - lastActive > ACTIVE_WINDOW_MS) return;
+      router.refresh();
+    }, REFRESH_MS);
+    return () => {
+      window.clearInterval(id);
+      for (const name of events) window.removeEventListener(name, markActive);
+    };
   }, [router]);
 
   return (
