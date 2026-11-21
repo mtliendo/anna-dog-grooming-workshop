@@ -1,0 +1,134 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Anna's Dog Grooming Workshop — Architecture</title>
+  <link href="https://fonts.googleapis.com/css2?family=Figtree:wght@400;500;600&amp;family=Roboto+Mono&amp;display=swap" rel="stylesheet">
+  <style>
+    *, *::before, *::after { box-sizing: border-box; }
+    :root {
+      --color-paper: #120021;
+      --color-surface: #20003a;
+      --color-zone: #1b0630;
+      --color-ink: #fffefa;
+      --color-muted: #c9bad8;
+      --color-soft: #9585a8;
+      --color-rule: #644078;
+      --color-accent: #d4a1ff;
+      --font-sans: Figtree, Arial, sans-serif;
+      --font-mono: "Roboto Mono", ui-monospace, monospace;
+    }
+    body { margin: 0; padding: 2rem; background: var(--color-paper); color: var(--color-ink); font-family: var(--font-sans); }
+    .frame { margin: auto; max-width: 1200px; }
+    .diagram-container { width: 100%; overflow-x: auto; }
+    svg { display: block; width: 100%; min-width: 960px; font-family: var(--font-sans); }
+    .headline { fill: var(--color-ink); font-size: 36px; font-weight: 400; letter-spacing: -1px; }
+    .subtitle { fill: var(--color-muted); font-size: 17px; }
+    .node { fill: var(--color-surface); stroke: var(--color-rule); stroke-width: 1.2; }
+    .focus { stroke: var(--color-accent); }
+    .zone { fill: var(--color-zone); stroke: var(--color-rule); stroke-dasharray: 6 4; }
+    .name { fill: var(--color-ink); font-size: 19px; font-weight: 600; }
+    .detail { fill: var(--color-muted); font-size: 15px; }
+    .code { font-family: var(--font-mono); font-size: 14px; }
+    .edge { fill: none; stroke: var(--color-soft); stroke-width: 1.5; marker-end: url(#arrow); }
+    .edge-mask { fill: var(--color-paper); }
+    .edge-label { fill: var(--color-muted); font-size: 14px; text-anchor: middle; }
+    .caption { fill: var(--color-soft); font-size: 14px; }
+    @media print { .diagram-container { overflow-x: visible; } svg { min-width: 0; } }
+  </style>
+</head>
+<body>
+  <main class="frame">
+    <div class="diagram-container">
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 960 600" role="img" aria-labelledby="architecture-title architecture-desc">
+        <title id="architecture-title">Anna's Dog Grooming Workshop</title>
+        <desc id="architecture-desc">Salon customers sign in through Auth0 Universal Login, the app uses Token Vault for Calendar access, and OAuth MCP clients use scoped Auth0 tokens to manage the same customer-owned records.</desc>
+        <defs>
+          <marker id="arrow" markerWidth="8" markerHeight="6" refX="8" refY="3" orient="auto">
+            <path d="M0,0 L8,3 L0,6 Z" fill="#9585a8"/>
+          </marker>
+        </defs>
+
+        <rect width="960" height="600" fill="#120021"/>
+        <rect class="zone" x="352" y="228" width="248" height="328" rx="12"/>
+        <text class="caption" x="376" y="256">Next.js on Vercel</text>
+
+        <path class="edge" d="M40,488 H32 Q24,488 24,480 V140 Q24,132 32,132 H376"/>
+        <path class="edge" d="M144,284 V164 Q144,156 152,156 H376"/>
+        <path class="edge" d="M248,324 H376"/>
+        <path class="edge" d="M248,500 H376"/>
+        <path class="edge" d="M576,336 H724"/>
+        <path class="edge" d="M520,464 V380 Q520,372 528,372 H724"/>
+        <path class="edge" d="M576,480 H724"/>
+        <path class="edge" d="M576,524 H724"/>
+
+        <g>
+          <rect class="node" x="376" y="120" width="208" height="72" rx="12"/>
+          <text class="name" x="392" y="151">Auth0</text>
+          <text class="detail" x="392" y="173">Universal Login + OAuth</text>
+        </g>
+        <g>
+          <rect class="node" x="40" y="284" width="208" height="80" rx="12"/>
+          <text class="name" x="56" y="316">AI agent</text>
+          <text class="detail" x="56" y="340">OAuth-capable MCP client</text>
+        </g>
+        <g>
+          <rect class="node" x="40" y="464" width="208" height="72" rx="12"/>
+          <text class="name" x="56" y="495">Salon customer</text>
+          <text class="detail" x="56" y="517">Browser</text>
+        </g>
+        <g>
+          <rect class="node focus" x="376" y="284" width="200" height="80" rx="12"/>
+          <text class="name code" x="392" y="316">/mcp</text>
+          <text class="detail" x="392" y="340">Checks JWT and scopes</text>
+        </g>
+        <g>
+          <rect class="node" x="376" y="464" width="200" height="72" rx="12"/>
+          <text class="name" x="392" y="495">Salon web app</text>
+          <text class="detail" x="392" y="517">Bookings and reminders</text>
+        </g>
+        <g>
+          <rect class="node" x="724" y="308" width="196" height="80" rx="12"/>
+          <text class="name" x="740" y="340">Booking database</text>
+          <text class="detail" x="740" y="364">Keyed by <tspan class="code">user_sub</tspan></text>
+        </g>
+        <g>
+          <rect class="node focus" x="724" y="432" width="196" height="64" rx="12"/>
+          <text class="name" x="740" y="460">Auth0 Token Vault</text>
+          <text class="detail" x="740" y="482">Connected Google</text>
+        </g>
+        <g>
+          <rect class="node" x="724" y="508" width="196" height="56" rx="12"/>
+          <text class="name" x="740" y="542">Google Calendar</text>
+        </g>
+
+        <g>
+          <rect class="edge-mask" x="160" y="120" width="176" height="24" rx="4"/>
+          <text class="edge-label" x="248" y="137">Sign in (Universal Login)</text>
+          <rect class="edge-mask" x="204" y="144" width="120" height="24" rx="4"/>
+          <text class="edge-label" x="264" y="161">DCR + consent</text>
+          <rect class="edge-mask" x="256" y="312" width="104" height="24" rx="4"/>
+          <text class="edge-label" x="308" y="329">Bearer JWT</text>
+          <rect class="edge-mask" x="260" y="488" width="88" height="24" rx="4"/>
+          <text class="edge-label" x="304" y="505">Web session</text>
+          <rect class="edge-mask" x="608" y="324" width="88" height="24" rx="4"/>
+          <text class="edge-label" x="652" y="341">MCP tools</text>
+          <rect class="edge-mask" x="608" y="360" width="88" height="24" rx="4"/>
+          <text class="edge-label" x="652" y="377">Read/write</text>
+          <rect class="edge-mask" x="600" y="468" width="108" height="24" rx="4"/>
+          <text class="edge-label" x="654" y="485">Token exchange</text>
+          <rect class="edge-mask" x="604" y="512" width="100" height="24" rx="4"/>
+          <text class="edge-label" x="654" y="529">Create event</text>
+        </g>
+
+        <text class="headline" x="40" y="56">Anna's Dog Grooming Workshop</text>
+        <text class="subtitle" x="40" y="84">One customer identity connects the salon, Calendar reminders, and secure MCP tools.</text>
+        <line x1="40" y1="560" x2="688" y2="560" stroke="#644078"/>
+        <text class="caption" x="40" y="584">Solid arrows: requests</text>
+        <text class="caption" x="288" y="584">Dashed boundary: hosted application</text>
+      </svg>
+    </div>
+  </main>
+</body>
+</html>
