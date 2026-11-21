@@ -43,7 +43,7 @@
     <div class="diagram-container">
       <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 960 600" role="img" aria-labelledby="architecture-title architecture-desc">
         <title id="architecture-title">Anna's Dog Grooming Workshop</title>
-        <desc id="architecture-desc">The salon uses Auth0 Token Vault for Calendar access, while OAuth MCP clients use scoped Auth0 tokens to manage the same customer-owned dog and booking records.</desc>
+        <desc id="architecture-desc">Salon customers sign in through Auth0 Universal Login, the app uses Token Vault for Calendar access, and OAuth MCP clients use scoped Auth0 tokens to manage the same customer-owned records.</desc>
         <defs>
           <marker id="arrow" markerWidth="8" markerHeight="6" refX="8" refY="3" orient="auto">
             <path d="M0,0 L8,3 L0,6 Z" fill="#9585a8"/>
@@ -54,6 +54,7 @@
         <rect class="zone" x="352" y="228" width="248" height="328" rx="12"/>
         <text class="caption" x="376" y="256">Next.js on Vercel</text>
 
+        <path class="edge" d="M40,488 H32 Q24,488 24,480 V140 Q24,132 32,132 H376"/>
         <path class="edge" d="M144,284 V164 Q144,156 152,156 H376"/>
         <path class="edge" d="M248,324 H376"/>
         <path class="edge" d="M248,500 H376"/>
@@ -64,8 +65,8 @@
 
         <g>
           <rect class="node" x="376" y="120" width="208" height="72" rx="12"/>
-          <text class="name" x="392" y="151">Auth0 authorization</text>
-          <text class="detail" x="392" y="173">Client registration + JWTs</text>
+          <text class="name" x="392" y="151">Auth0</text>
+          <text class="detail" x="392" y="173">Universal Login + OAuth</text>
         </g>
         <g>
           <rect class="node" x="40" y="284" width="208" height="80" rx="12"/>
@@ -75,7 +76,7 @@
         <g>
           <rect class="node" x="40" y="464" width="208" height="72" rx="12"/>
           <text class="name" x="56" y="495">Salon customer</text>
-          <text class="detail" x="56" y="517">Browser + Universal Login</text>
+          <text class="detail" x="56" y="517">Browser</text>
         </g>
         <g>
           <rect class="node focus" x="376" y="284" width="200" height="80" rx="12"/>
@@ -103,6 +104,8 @@
         </g>
 
         <g>
+          <rect class="edge-mask" x="160" y="120" width="176" height="24" rx="4"/>
+          <text class="edge-label" x="248" y="137">Sign in (Universal Login)</text>
           <rect class="edge-mask" x="204" y="144" width="120" height="24" rx="4"/>
           <text class="edge-label" x="264" y="161">DCR + consent</text>
           <rect class="edge-mask" x="256" y="312" width="104" height="24" rx="4"/>
