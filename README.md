@@ -39,6 +39,8 @@ The logged-out boutique landing — Sign in / Sign up and today's grooming menu 
 
 ## Architecture
 
+See the [full workshop architecture](docs/architecture.png) for how [Phase 2](https://github.com/mtliendo/anna-dog-grooming-workshop/tree/phase-2-calendar) adds Google Calendar and [Phase 3](https://github.com/mtliendo/anna-dog-grooming-workshop/tree/phase-3-mcp) adds secure MCP. The diagram below shows only Phase 1.
+
 ```mermaid
 flowchart LR
   Browser["Customer browser"] -->|"/auth/login"| Auth0["Auth0 Universal Login"]
